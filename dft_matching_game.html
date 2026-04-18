@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFT性质消消乐 - 五大关卡挑战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 强制sub和sup标签的样式 */
+        sub {
+            font-size: 0.7em;
+            vertical-align: sub;
+            line-height: 0;
+            position: relative;
+            bottom: 0.2em;
+            display: inline;
+        }
+
+        sup {
+            font-size: 0.7em;
+            vertical-align: super;
+            line-height: 0;
+            position: relative;
+            top: 0.2em;
+            display: inline;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .game-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .game-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-title::before {
+            content: '🎮 ';
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 18px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Level Info */
+        .level-info {
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+            padding: 12px 20px;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .level-subtitle {
+            background: #e8f4f8;
+            padding: 10px 20px;
+            text-align: center;
+            color: #2c3e50;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .original-sequence {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            padding: 5px 12px;
+            border-radius: 8px;
+            margin-left: 10px;
+            font-weight: bold;
+            color: #6c5ce7;
+        }
+
+        /* Main Game Area */
+        .game-area {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            min-height: 420px;
+        }
+
+        .card-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column-header {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .time-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .freq-header {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        .cards-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .cards-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        /* Cards */
+        .card {
+            padding: 12px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card.formula-card {
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            font-variant: normal;
+            font-variant-numeric: normal;
+        }
+
+        /* 强制下标上标样式 */
+        .formula-card sub {
+            font-size: 0.7em;
+            vertical-align: sub;
+            display: inline-block;
+            position: relative;
+            top: 0.3em;
+        }
+
+        .formula-card sup {
+            font-size: 0.7em;
+            vertical-align: super;
+            display: inline-block;
+            position: relative;
+            top: -0.3em;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .time-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .freq-card {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .card.selected {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px #ffd700, 0 8px 25px rgba(0, 0, 0, 0.3);
+            animation: pulse 0.5s ease infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 0 4px #ffd700, 0 8px 25px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 0 0 6px #ffd700, 0 8px 30px rgba(255, 215, 0, 0.4); }
+        }
+
+        .card.correct {
+            animation: correctAnim 0.6s ease forwards;
+        }
+
+        @keyframes correctAnim {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .card.wrong {
+            animation: wrongAnim 0.5s ease;
+        }
+
+        @keyframes wrongAnim {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); background: #ff6b6b; }
+            40% { transform: translateX(10px); background: #ff6b6b; }
+            60% { transform: translateX(-10px); background: #ff6b6b; }
+            80% { transform: translateX(10px); background: #ff6b6b; }
+        }
+
+        .card.matched {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .card.hidden {
+            display: none;
+        }
+
+        /* Footer Controls */
+        .game-footer {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-home {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+
+        .btn-prev {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 550px;
+            width: 90%;
+            text-align: center;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .modal-text {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 18px;
+            line-height: 1.6;
+        }
+
+        .modal-formula {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Times New Roman', serif;
+            font-size: 15px;
+            color: #4a4a8a;
+            word-break: break-all;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            text-align: center;
+            padding: 35px;
+        }
+
+        .start-title {
+            font-size: 30px;
+            color: #333;
+            margin-bottom: 18px;
+        }
+
+        .start-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .level-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .level-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 12px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .level-card-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .level-card-desc {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .level-card.pairs-info {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .start-instructions {
+            background: #f8f9fa;
+            padding: 18px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .instruction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .instruction-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 45px;
+            font-size: 18px;
+            border-radius: 30px;
+        }
+
+        /* Level Complete */
+        .level-complete {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .complete-icon {
+            font-size: 55px;
+            margin-bottom: 12px;
+        }
+
+        .complete-title {
+            font-size: 26px;
+            color: #11998e;
+            margin-bottom: 10px;
+        }
+
+        .complete-score {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 18px;
+        }
+
+        .knowledge-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px;
+            border-radius: 15px;
+            margin: 18px 0;
+            text-align: left;
+        }
+
+        .knowledge-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .knowledge-item {
+            font-size: 13px;
+            margin-bottom: 7px;
+            padding-left: 10px;
+            opacity: 0.9;
+        }
+
+        /* Timer Warning */
+        .timer-warning {
+            animation: timerPulse 0.5s ease infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { color: white; }
+            50% { color: #ff6b6b; }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 650px) {
+            .game-area {
+                flex-direction: column;
+            }
+
+            .game-title {
+                font-size: 20px;
+            }
+
+            .game-stats {
+                gap: 12px;
+            }
+
+            .stat-item {
+                padding: 5px 12px;
+            }
+
+            .card {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .btn {
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+
+            .level-preview {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h1 class="start-title">🎮 DFT性质消消乐 - 五大关卡</h1>
+            <p class="start-subtitle">通过游戏学习离散傅里叶变换的性质<br>从公式匹配到序列计算，全面掌握DFT</p>
+            
+            <div class="level-preview">
+                <div class="level-card">
+                    <div class="level-card-title">关卡1</div>
+                    <div class="level-card-desc">公式消消乐<br>匹配时域频域公式</div>
+                    <div class="level-card pairs-info">⏱️ 60秒 | 8对</div>
+                </div>
+                <div class="level-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div class="level-card-title">关卡2</div>
+                    <div class="level-card-desc">计算圆周移位<br>序列循环平移</div>
+                    <div class="level-card pairs-info">⏱️ 90秒 | 5对</div>
+                </div>
+                <div class="level-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="level-card-title">关卡3</div>
+                    <div class="level-card-desc">圆周移位性质<br>加深公式理解</div>
+                    <div class="level-card pairs-info">⏱️ 60秒 | 4对</div>
+                </div>
+                <div class="level-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="level-card-title">关卡4</div>
+                    <div class="level-card-desc">计算圆周翻折<br>序列反转计算</div>
+                    <div class="level-card pairs-info">⏱️ 120秒 | 5对</div>
+                </div>
+                <div class="level-card" style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); color: #333;">
+                    <div class="level-card-title">关卡5</div>
+                    <div class="level-card-desc">共轭对称性质<br>实虚部分解</div>
+                    <div class="level-card pairs-info">⏱️ 60秒 | 6对</div>
+                </div>
+            </div>
+
+            <div class="start-instructions">
+                <div class="instruction-item">
+                    <span class="instruction-icon">📚</span>
+                    <span><strong>游戏目标：</strong>完成5个关卡的匹配挑战，掌握DFT三大性质</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="instruction-icon">🎯</span>
+                    <span><strong>操作方法：</strong>先点击左侧卡片，再点击右侧卡片进行匹配</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="instruction-icon">⏱️</span>
+                    <span><strong>时间限制：</strong>各关卡时间不同，答对+10分，答错-2分</span>
+                </div>
+                <div class="instruction-item">
+                    <span class="instruction-icon">💡</span>
+                    <span><strong>提示功能：</strong>点击提示按钮获取帮助</span>
+                </div>
+            </div>
+
+            <div class="knowledge-box">
+                <div class="knowledge-title">📖 DFT三大性质</div>
+                <div class="knowledge-item">1️⃣ 圆周移位性质：时域循环移位 → 频域相位旋转</div>
+                <div class="knowledge-item">2️⃣ 圆周翻折性质：时域反转 → 频谱翻折</div>
+                <div class="knowledge-item">3️⃣ 共轭对称性质：实序列 → 共轭对称频谱</div>
+            </div>
+
+            <button class="btn btn-start" onclick="startGame()">开始游戏 🚀</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" style="display: none;">
+            <div class="game-header">
+                <h1 class="game-title">DFT性质消消乐</h1>
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">🏆 得分</span>
+                        <span class="stat-value" id="score">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">⏱️ 剩余</span>
+                        <span class="stat-value" id="timer">60</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">📊 进度</span>
+                        <span class="stat-value" id="progress">0/8</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="level-info" id="levelInfo">关卡1：公式消消乐</div>
+            <div class="level-subtitle" id="levelSubtitle">匹配时域和频域的数学公式表达式</div>
+
+            <div class="game-area">
+                <div class="card-column">
+                    <div class="column-header time-header" id="leftTitle">⏰ 时域</div>
+                    <div class="cards-container" id="timeCards"></div>
+                </div>
+                <div class="card-column">
+                    <div class="column-header freq-header" id="rightTitle">📈 频域</div>
+                    <div class="cards-container" id="freqCards"></div>
+                </div>
+            </div>
+
+            <div class="game-footer">
+                <button class="btn btn-home" onclick="goHome()">🏠 返回开始</button>
+                <button class="btn btn-prev" id="prevBtn" onclick="prevLevel()">⬆️ 上一关</button>
+                <button class="btn btn-reset" onclick="resetLevel()">🔄 重置</button>
+                <button class="btn btn-next" id="nextBtn" onclick="nextLevel()" disabled>下一关 ➡️</button>
+            </div>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div id="levelCompleteScreen" style="display: none;">
+            <div class="level-complete">
+                <div class="complete-icon">🎉</div>
+                <h2 class="complete-title" id="completeTitle">关卡完成！</h2>
+                <p class="complete-score" id="completeScore">本关得分：0</p>
+                
+                <div class="knowledge-box" id="knowledgeBox">
+                    <div class="knowledge-title">📚 知识点总结</div>
+                    <div id="knowledgeContent"></div>
+                </div>
+
+                <button class="btn btn-next" onclick="continueGame()">继续游戏 ➡️</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" style="display: none;">
+            <div class="level-complete">
+                <div class="complete-icon">🏆</div>
+                <h2 class="complete-title">恭喜通关！</h2>
+                <p class="complete-score" id="finalScore">最终得分：0</p>
+                
+                <div class="knowledge-box">
+                    <div class="knowledge-title">🎓 学习成果</div>
+                    <p style="font-size: 14px; opacity: 0.9; margin-top: 10px;">
+                        你已完成DFT性质消消乐全部5个关卡！<br>
+                        掌握了圆周移位、圆周翻折、共轭对称三大性质！
+                    </p>
+                </div>
+
+                <button class="btn btn-reset" onclick="restartGame()">再玩一次 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hint Modal -->
+    <div class="modal" id="hintModal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modalTitle">💡 提示</h3>
+            <div class="modal-text" id="modalText"></div>
+            <div class="modal-formula" id="modalFormula" style="display: none;"></div>
+            <button class="btn btn-reset" onclick="closeModal()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 计算函数 ====================
+        
+        // 周期延拓函数
+        function periodicExtension(seq, N) {
+            let periodic = new Array(N).fill(0);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < seq.length; j++) {
+                    if ((i - j) % N === 0) {
+                        periodic[i] += seq[j];
+                    }
+                }
+            }
+            return periodic;
+        }
+
+        // 圆周移位
+        function circularShift(seq, shift, N) {
+            let periodic = periodicExtension(seq, N);
+            let result = [];
+            for (let i = 0; i < N; i++) {
+                let idx = (i - shift) % N;
+                if (idx < 0) idx += N;
+                result[i] = periodic[idx];
+            }
+            return result;
+        }
+
+        // 圆周翻折
+        function circularFold(seq, N) {
+            let periodic = periodicExtension(seq, N);
+            let result = [periodic[0]];
+            for (let i = 1; i < N; i++) {
+                result[i] = periodic[N - i];
+            }
+            return result;
+        }
+
+        // 翻折后再移位 (x((-(n-m)))ₙ)
+        function foldThenShift(seq, shift, N) {
+            let folded = circularFold(seq, N);
+            return circularShift(folded, shift, N);
+        }
+
+        // 移位后再翻折 (x((-n-m))ₙ)
+        function shiftThenFold(seq, shift, N) {
+            let shifted = circularShift(seq, shift, N);
+            return circularFold(shifted, N);
+        }
+
+        // 格式化序列显示
+        function formatSeq(seq) {
+            return '{' + seq.join(',') + '}';
+        }
+
+        // ==================== 关卡数据定义 ====================
+        
+        // 关卡1：公式消消乐 - 7对公式
+        const level1Pairs = [
+            {
+                left: 'x((n-2))<sub>N</sub>R<sub>N</sub>(n)',
+                right: 'X(k)e<sup>-j4πk/N</sup>',
+                formula: '圆周右移2位 → 相位旋转 e<sup>-j4πk/N</sup>'
+            },
+            {
+                left: 'x((n+2))<sub>N</sub>R<sub>N</sub>(n)',
+                right: 'X(k)e<sup>+j4πk/N</sup>',
+                formula: '圆周左移2位 → 相位旋转 e<sup>+j4πk/N</sup>'
+            },
+            {
+                left: 'Σ|x(n)|<sup>2</sup>',
+                right: '(1/N)Σ|X(k)|<sup>2</sup>',
+                formula: '帕斯瓦定理：时域能量 = 频域能量/N'
+            },
+            {
+                left: 'x*(n)',
+                right: 'X*((-k))<sub>N</sub>R<sub>N</sub>(k)',
+                formula: '共轭性质：时域取共轭 → 频域共轭翻折'
+            },
+            {
+                left: 'x((-n))<sub>N</sub>R<sub>N</sub>(n)',
+                right: 'X((-k))<sub>N</sub>R<sub>N</sub>(k)',
+                formula: '圆周翻折：时域反转 → 频谱翻折'
+            },
+            {
+                left: 'x((n-1))<sub>N</sub>R<sub>N</sub>(n)',
+                right: 'X(k)e<sup>-j2πk/N</sup>',
+                formula: '圆周右移1位 → 相位旋转 e<sup>-j2πk/N</sup>'
+            },
+            {
+                left: 'x((n+1))<sub>N</sub>R<sub>N</sub>(n)',
+                right: 'X(k)e<sup>+j2πk/N</sup>',
+                formula: '圆周左移1位 → 相位旋转 e<sup>+j2πk/N</sup>'
+            }
+        ];
+
+        // 关卡2：计算圆周移位 - 5对
+        const level2Data = {
+            seq: [1, 2, 3, 4, 5],
+            pairs: [
+                {
+                    left: 'x((n+3))<sub>5</sub>R<sub>5</sub>(n)',
+                    right: formatSeq(circularShift([1,2,3,4,5], -3, 5)),
+                    formula: '圆周左移3位: x[(n+3)₅]'
+                },
+                {
+                    left: 'x((n-3))<sub>5</sub>R<sub>5</sub>(n)',
+                    right: formatSeq(circularShift([1,2,3,4,5], 3, 5)),
+                    formula: '圆周右移3位: x[(n-3)₅]'
+                },
+                {
+                    left: 'x((n-1))<sub>5</sub>R<sub>5</sub>(n)',
+                    right: formatSeq(circularShift([1,2,3,4,5], 1, 5)),
+                    formula: '圆周右移1位: x[(n-1)₅]'
+                },
+                {
+                    left: 'x((n-1))<sub>6</sub>R<sub>6</sub>(n)',
+                    right: formatSeq(circularShift([1,2,3,4,5], 1, 6)),
+                    formula: '圆周右移1位(补零): x[(n-1)₆]'
+                },
+                {
+                    left: 'x((n-1))<sub>4</sub>R<sub>4</sub>(n)',
+                    right: formatSeq(circularShift([1,2,3,4,5], 1, 4)),
+                    formula: '圆周右移1位(交叠): x[(n-1)₄]'
+                }
+            ]
+        };
+
+        // 关卡3：圆周移位性质理解 - 4对文字描述
+        const level3Pairs = [
+            {
+                left: '圆周右移1位',
+                right: '相位旋转 e<sup>-j2πk/N</sup>',
+                formula: '时域右移 → 频域乘以 e<sup>-j2πk/N</sup>'
+            },
+            {
+                left: '圆周右移2位',
+                right: '相位旋转 e<sup>-j4πk/N</sup>',
+                formula: '时域右移2位 → 频域乘以 e<sup>-j4πk/N</sup>'
+            },
+            {
+                left: '圆周左移1位',
+                right: '相位旋转 e<sup>+j2πk/N</sup>',
+                formula: '时域左移 → 频域乘以 e<sup>+j2πk/N</sup>'
+            },
+            {
+                left: '圆周左移2位',
+                right: '相位旋转 e<sup>+j4πk/N</sup>',
+                formula: '时域左移2位 → 频域乘以 e<sup>+j4πk/N</sup>'
+            }
+        ];
+
+        // 关卡4：计算圆周翻折及组合 - 5对
+        const level4Data = {
+            seq: [1, 2, 3, 4, 5],
+            pairs: [
+                {
+                    left: 'x((-n))<sub>5</sub>R<sub>5</sub>(n)',
+                    right: formatSeq(circularFold([1,2,3,4,5], 5)),
+                    formula: '圆周翻折: x[(-n)₅]'
+                },
+                {
+                    left: 'x((-n))<sub>6</sub>R<sub>6</sub>(n)',
+                    right: formatSeq(circularFold([1,2,3,4,5], 6)),
+                    formula: '圆周翻折(补零): x[(-n)₆]'
+                },
+                {
+                    left: 'x((-n))<sub>3</sub>R<sub>3</sub>(n)',
+                    right: formatSeq(circularFold([1,2,3,4,5], 3)),
+                    formula: '圆周翻折(交叠): x[(-n)₃]'
+                },
+                {
+                    left: 'x((-(n-1)))<sub>5</sub>R<sub>5</sub>(n)',
+                    right: formatSeq(foldThenShift([1,2,3,4,5], 1, 5)),
+                    formula: '先翻折再右移1位'
+                },
+                {
+                    left: 'x((-n-1))<sub>5</sub>R<sub>5</sub>(n)',
+                    right: formatSeq(shiftThenFold([1,2,3,4,5], 1, 5)),
+                    formula: '先右移1位再翻折'
+                }
+            ]
+        };
+
+        // 关卡5：圆周共轭对称性质 - 6对
+        const level5Pairs = [
+            {
+                left: '取实部',
+                right: '取圆周共轭对称分量 X<sub>ep</sub>(k)',
+                formula: '时域取实部 → 频域共轭对称分量'
+            },
+            {
+                left: '取虚部×j',
+                right: '取圆周共轭反对称分量 X<sub>op</sub>(k)',
+                formula: '时域取虚部 → 频域共轭反对称分量'
+            },
+            {
+                left: '取圆周共轭对称分量 x<sub>ep</sub>(n)',
+                right: '取实部',
+                formula: '时域共轭对称分量 → 频域取实部'
+            },
+            {
+                left: '取圆周共轭反对称分量 x<sub>op</sub>(n)',
+                right: '取虚部×j',
+                formula: '时域共轭反对称分量 → 频域取虚部'
+            },
+            {
+                left: '实偶序列',
+                right: '实偶序列',
+                formula: '实偶序列 ↔ 实偶频谱'
+            },
+            {
+                left: '实奇序列',
+                right: '纯虚奇序列',
+                formula: '实奇序列 ↔ 纯虚奇频谱'
+            }
+        ];
+
+        // ==================== 关卡配置 ====================
+        
+        const levels = [
+            {
+                id: 1,
+                title: "关卡1：DFT性质公式匹配",
+                subtitle: "匹配时域操作和频域变化的数学公式表达式",
+                leftTitle: "⏰ 时域操作",
+                rightTitle: "📈 频域变化",
+                timeLimit: 60,
+                originalSeq: false,
+                knowledge: [
+                    "圆周移位：时域循环平移对应频域相位旋转",
+                    "圆周翻折：时域反转对应频谱位置反转",
+                    "帕斯瓦定理：时域能量等于频域能量/N",
+                    "共轭性质：时域取共轭对应频域共轭反转"
+                ],
+                hint: "公式消消乐：左边是时域操作，右边是频域变化，找出对应的数学表达式！例如：x[(n-1)ₙ] ↔ X(k)e^{-j2πk/N}"
+            },
+            {
+                id: 2,
+                title: "关卡2：计算圆周移位",
+                subtitle: "给定序列，计算圆周移位后的结果",
+                leftTitle: "⏰ 圆周移位运算",
+                rightTitle: "📊 运算结果",
+                timeLimit: 90,
+                originalSeq: true,
+                showSequence: true,
+                knowledge: [
+                    "圆周右移：x[(n-n₀)ₙ] 将序列向右循环移动n₀位",
+                    "圆周左移：x[(n+n₀)ₙ] 将序列向左循环移动n₀位",
+                    "补零延长序列后再移位",
+                    "交叠时需要进行周期延拓求和"
+                ],
+                hint: "计算圆周移位：右移n₀位时，第i个结果来自第(i-n₀) mod N个元素"
+            },
+            {
+                id: 3,
+                title: "关卡3：圆周移位性质理解",
+                subtitle: "理解时域移位与频域相位旋转的关系",
+                leftTitle: "⏰ 时域操作",
+                rightTitle: "📈 频域变化",
+                timeLimit: 60,
+                originalSeq: false,
+                knowledge: [
+                    "时域圆周右移 → 频域乘以 e^{-j2πkn₀/N}",
+                    "时域圆周左移 → 频域乘以 e^{+j2πkn₀/N}",
+                    "移位量与相位旋转角度成正比",
+                    "幅度谱不变，只有相位谱变化"
+                ],
+                hint: "圆周移位性质：时域循环平移，频域只改变相位，幅度不变。右移对应负相位，左移对应正相位。"
+            },
+            {
+                id: 4,
+                title: "关卡4：计算圆周翻折及组合",
+                subtitle: "给定序列，计算圆周翻折及组合运算后的结果",
+                leftTitle: "⏰ 时域运算",
+                rightTitle: "📊 运算结果",
+                timeLimit: 120,
+                originalSeq: true,
+                showSequence: true,
+                knowledge: [
+                    "圆周翻折：x[(-n)ₙ] 将序列以n=0为中心反转",
+                    "翻折规律：x[0]不变，x[1]对应x[N-1]，x[2]对应x[N-2]...",
+                    "先翻折再移位 ≠ 先移位再翻折（不满足交换律）",
+                    "补零和交叠情况需要特别注意"
+                ],
+                hint: "圆周翻折：第i个元素变成第(N-i) mod N个元素。注意翻折和移位的顺序会影响结果！"
+            },
+            {
+                id: 5,
+                title: "关卡5：圆周共轭对称性质",
+                subtitle: "理解时域和频域的共轭对称关系",
+                leftTitle: "⏰ 时域操作",
+                rightTitle: "📈 频域变化",
+                timeLimit: 60,
+                originalSeq: false,
+                knowledge: [
+                    "实序列的DFT：X[k] = X*[N-k]，共轭对称",
+                    "实偶序列 ↔ 实偶频谱",
+                    "实奇序列 ↔ 纯虚奇频谱",
+                    "共轭对称分量和反对称分量分解"
+                ],
+                hint: "共轭对称性质：实序列的频谱具有共轭对称性。实部对应偶对称，虚部对应奇对称。"
+            }
+        ];
+
+        // ==================== 游戏状态 ====================
+        
+        let currentLevel = 0;
+        let score = 0;
+        let timeLeft = 60;
+        let timerInterval = null;
+        let selectedTimeCard = null;
+        let matchedPairs = 0;
+        let totalPairs = 0;
+        let hintsUsed = 0;
+        let currentPairs = [];
+        let gameStarted = false;
+
+        // ==================== 工具函数 ====================
+        
+        // 打乱数组
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // ==================== 游戏流程 ====================
+        
+        // 开始游戏
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            currentLevel = 0;
+            score = 0;
+            gameStarted = true;
+            updateScore();
+            updateNavButtons();
+            loadLevel(currentLevel);
+        }
+
+        // 加载关卡
+        function loadLevel(levelIndex) {
+            const level = levels[levelIndex];
+            matchedPairs = 0;
+            
+            // 根据关卡类型设置匹配对
+            switch(levelIndex) {
+                case 0: // 关卡1
+                    currentPairs = level1Pairs.map((p, i) => ({ ...p, id: i }));
+                    break;
+                case 1: // 关卡2
+                    currentPairs = level2Data.pairs.map((p, i) => ({ ...p, id: i }));
+                    break;
+                case 2: // 关卡3
+                    currentPairs = level3Pairs.map((p, i) => ({ ...p, id: i }));
+                    break;
+                case 3: // 关卡4
+                    currentPairs = level4Data.pairs.map((p, i) => ({ ...p, id: i }));
+                    break;
+                case 4: // 关卡5
+                    currentPairs = level5Pairs.map((p, i) => ({ ...p, id: i }));
+                    break;
+            }
+            
+            totalPairs = currentPairs.length;
+            hintsUsed = 0;
+            
+            // 更新标题
+            document.getElementById('levelInfo').textContent = level.title;
+            document.getElementById('leftTitle').textContent = level.leftTitle;
+            document.getElementById('rightTitle').textContent = level.rightTitle;
+            
+            // 处理副标题和原始序列显示
+            let subtitleHtml = level.subtitle;
+            if (level.showSequence) {
+                if (levelIndex === 1) {
+                    subtitleHtml += `<span class="original-sequence">序列: ${formatSeq(level2Data.seq)}</span>`;
+                } else if (levelIndex === 3) {
+                    subtitleHtml += `<span class="original-sequence">序列: ${formatSeq(level4Data.seq)}</span>`;
+                }
+            }
+            document.getElementById('levelSubtitle').innerHTML = subtitleHtml;
+            
+            document.getElementById('progress').textContent = `0/${totalPairs}`;
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('nextBtn').disabled = true;
+            
+            // 清空卡片
+            document.getElementById('timeCards').innerHTML = '';
+            document.getElementById('freqCards').innerHTML = '';
+            
+            // 打乱并创建卡片
+            const shuffledTime = shuffleArray(currentPairs.map((p, i) => ({ ...p, id: i })));
+            const shuffledFreq = shuffleArray(currentPairs.map((p, i) => ({ ...p, id: i })));
+            
+            shuffledTime.forEach((item, index) => {
+                const card = createTimeCard(item, index);
+                document.getElementById('timeCards').appendChild(card);
+            });
+            
+            shuffledFreq.forEach((item, index) => {
+                const card = createFreqCard(item, index);
+                document.getElementById('freqCards').appendChild(card);
+            });
+            
+            // 更新导航按钮
+            updateNavButtons();
+            
+            // 启动计时器
+            startTimer();
+        }
+
+        // 转换特殊字符
+        function escapeHtml(text) {
+            return text
+                .replace(/\(\(/g, '&#40;&#40;')
+                .replace(/\)\)/g, '&#41;&#41;');
+        }
+
+        // 创建时域卡片
+        function createTimeCard(item, index) {
+            const card = document.createElement('div');
+            card.className = 'card time-card formula-card';
+            card.innerHTML = escapeHtml(item.left);
+            card.dataset.id = item.id;
+            card.dataset.type = 'time';
+            card.onclick = () => selectTimeCard(card, item);
+            return card;
+        }
+
+        // 创建频域卡片
+        function createFreqCard(item, index) {
+            const card = document.createElement('div');
+            card.className = 'card freq-card formula-card';
+            card.innerHTML = escapeHtml(item.right);
+            card.dataset.id = item.id;
+            card.dataset.type = 'freq';
+            card.onclick = () => selectFreqCard(card, item);
+            return card;
+        }
+
+        // 选择时域卡片
+        function selectTimeCard(card, item) {
+            if (card.classList.contains('matched')) return;
+            
+            // 移除之前的选中状态
+            document.querySelectorAll('.time-card.selected').forEach(c => {
+                c.classList.remove('selected');
+            });
+            
+            card.classList.add('selected');
+            selectedTimeCard = { card, item };
+        }
+
+        // 选择频域卡片
+        function selectFreqCard(card, item) {
+            if (card.classList.contains('matched')) return;
+            if (!selectedTimeCard) {
+                showModal('⚠️ 请先选择左侧卡片', '先点击左侧的卡片，再选择对应的匹配项');
+                return;
+            }
+            
+            // 检查是否匹配
+            if (selectedTimeCard.item.id === item.id) {
+                // 正确匹配
+                selectedTimeCard.card.classList.remove('selected');
+                selectedTimeCard.card.classList.add('correct');
+                card.classList.add('correct');
+                
+                setTimeout(() => {
+                    selectedTimeCard.card.classList.add('hidden');
+                    card.classList.add('hidden');
+                    selectedTimeCard.card.classList.remove('correct');
+                    card.classList.remove('correct');
+                    selectedTimeCard.card.classList.add('matched');
+                    card.classList.add('matched');
+                }, 600);
+                
+                score += 10;
+                matchedPairs++;
+                updateScore();
+                updateProgress();
+                
+                // 显示公式说明
+                showModal('✅ 匹配正确！', selectedTimeCard.item.formula);
+                
+                selectedTimeCard = null;
+                
+                // 检查关卡完成
+                if (matchedPairs === totalPairs) {
+                    setTimeout(() => levelComplete(), 1000);
+                }
+            } else {
+                // 错误匹配
+                card.classList.add('wrong');
+                setTimeout(() => card.classList.remove('wrong'), 500);
+                
+                score = Math.max(0, score - 2);
+                updateScore();
+                
+                showModal('❌ 不匹配', '这个选项与选中的卡片不对应，再试试！');
+            }
+        }
+
+        // 更新分数
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        // 更新进度
+        function updateProgress() {
+            document.getElementById('progress').textContent = `${matchedPairs}/${totalPairs}`;
+            document.getElementById('progressBar').style.width = `${(matchedPairs / totalPairs) * 100}%`;
+        }
+
+        // 更新导航按钮
+        function updateNavButtons() {
+            // 上一关按钮
+            const prevBtn = document.getElementById('prevBtn');
+            prevBtn.disabled = (currentLevel === 0);
+            
+            // 下一关按钮
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.disabled = true; // 默认禁用，需要完成当前关卡
+        }
+
+        // 启动计时器
+        function startTimer() {
+            clearInterval(timerInterval);
+            const level = levels[currentLevel];
+            timeLeft = level.timeLimit;
+            document.getElementById('timer').textContent = timeLeft;
+            document.getElementById('timer').classList.remove('timer-warning');
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 10) {
+                    document.getElementById('timer').classList.add('timer-warning');
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeOut();
+                }
+            }, 1000);
+        }
+
+        // 时间到
+        function timeOut() {
+            showModal('⏰ 时间到！', `本关还剩 ${totalPairs - matchedPairs} 对未匹配。${totalPairs - matchedPairs === totalPairs ? '别灰心，再试一次！' : '继续加油！'}`);
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        // 关卡完成
+        function levelComplete() {
+            clearInterval(timerInterval);
+            
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('levelCompleteScreen').style.display = 'block';
+            
+            const timeBonus = timeLeft;
+            const levelScore = matchedPairs * 10 + timeBonus;
+            score += timeBonus;
+            updateScore();
+            
+            document.getElementById('completeTitle').textContent = levels[currentLevel].title + ' 完成！';
+            document.getElementById('completeScore').textContent = `本关得分：${levelScore} (匹配${matchedPairs}对×10分 + 时间奖励${timeBonus}分)`;
+            
+            // 显示知识点
+            const knowledgeHtml = levels[currentLevel].knowledge.map(k => 
+                `<div class="knowledge-item">${k}</div>`
+            ).join('');
+            document.getElementById('knowledgeContent').innerHTML = knowledgeHtml;
+        }
+
+        // 继续游戏
+        function continueGame() {
+            document.getElementById('levelCompleteScreen').style.display = 'none';
+            
+            if (currentLevel < levels.length - 1) {
+                currentLevel++;
+                document.getElementById('gameScreen').style.display = 'block';
+                loadLevel(currentLevel);
+            } else {
+                // 游戏完成
+                document.getElementById('gameOverScreen').style.display = 'block';
+                document.getElementById('finalScore').textContent = `最终得分：${score}`;
+            }
+        }
+
+        // 显示提示
+        function showHint() {
+            const level = levels[currentLevel];
+            showModal('💡 提示', level.hint);
+        }
+
+        // 重置当前关卡
+        function resetLevel() {
+            loadLevel(currentLevel);
+        }
+
+        // 上一关
+        function prevLevel() {
+            if (currentLevel > 0) {
+                currentLevel--;
+                loadLevel(currentLevel);
+            }
+        }
+
+        // 下一关
+        function nextLevel() {
+            if (currentLevel < levels.length - 1) {
+                currentLevel++;
+                loadLevel(currentLevel);
+            }
+        }
+
+        // 返回开始界面
+        function goHome() {
+            clearInterval(timerInterval);
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('levelCompleteScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            gameStarted = false;
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('levelCompleteScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            gameStarted = false;
+        }
+
+        // 弹窗
+        function showModal(title, text, formula = null) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalText').textContent = text;
+            document.getElementById('modalFormula').textContent = formula || '';
+            document.getElementById('modalFormula').style.display = formula ? 'block' : 'none';
+            document.getElementById('hintModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('hintModal').classList.remove('show');
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('hintModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('hintModal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
